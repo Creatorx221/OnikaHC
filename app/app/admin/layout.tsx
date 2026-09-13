@@ -1,0 +1,14 @@
+import type { Metadata } from 'next';
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = {
+  title: 'Research desk',
+  robots: { index: false, follow: false },
+  alternates: { canonical: null },
+};
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <div className="research-desk">{children}</div>;
+}

@@ -1,0 +1,1 @@
+export async function POST(){return Response.json({accepted:false,message:'Newsletter sign-up is not connected yet. No subscription has been created.'},{status:503,headers:{'Cache-Control':'no-store'}});}
