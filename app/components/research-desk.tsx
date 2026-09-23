@@ -31,9 +31,9 @@ export function DeskHeader({ children, owner = false }: { children?: React.React
       <a href="/admin" aria-label="Research desk home">
         <img
           src={brand.logo}
-          width="2172"
-          height="724"
-          alt="Heuresis Capital"
+          width="3739"
+          height="849"
+          alt="Heuresis Capital Research"
         />
       </a>
       <nav aria-label="Research desk navigation">

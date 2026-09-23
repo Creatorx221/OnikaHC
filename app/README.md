@@ -26,7 +26,7 @@ Open **Team profiles** to add a person's name, role, biography, credentials, pho
 
 Open **Files** to upload a logo, photo or standalone document, search existing files, and view archived files. Uploads remain private until linked from published content. In **Document library**, add a title, description, category and selected file for each resource. Move entries up or down, replace a file, hide or remove an entry, then publish. The public `/resources` page and its downloads follow the published version. After replacing a document, archive the old file only after the published page no longer uses it.
 
-Use **Brand, navigation & footer** for the logo, contact email, navigation and footer links. The approved logo is `public/logo-approved.png`; the initial site uses it without needing an upload. The contact form and research-update button prepare email drafts for visitors to send in their own email apps. No server-side inbox or automatic mailing list is connected.
+Use **Brand, navigation & footer** for the logo, contact email, navigation and footer links. The approved Heuresis Capital Research logo is included in `public/logo-research-light.png` and `public/logo-research-navy.png` for light and dark surfaces. The former built-in path, `public/logo-approved.png`, also serves the approved light artwork so saved settings remain valid. The contact form and research-update button prepare email drafts for visitors to send in their own email apps. No server-side inbox or automatic mailing list is connected.
 
 All approved editors can edit and publish all research. Only owners can approve or revoke editor access. Concurrent edits produce a conflict instead of silently overwriting work. There is no automatic saving: save before leaving.
 

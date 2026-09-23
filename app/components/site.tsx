@@ -4,7 +4,7 @@ import Link from '@/components/navigation';
 import { useState, useEffect } from 'react';
 import { ArrowUpRight, ArrowRight, Menu, Mail, Copy, Check, Printer } from 'lucide-react';
 import { Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { brand } from '@/lib/brand';
+import { brand, resolveBrandLogo } from '@/lib/brand';
 import { site } from '@/lib/site-config';
 import { useWebsite } from '@/components/website-context';
 import { value, items } from '@/lib/website-schema';
@@ -24,7 +24,7 @@ export function Header() {
 
   const content = useWebsite();
   const settings = content?.settings;
-  const logo = (settings && value(settings, 'logo')) || brand.logo;
+  const logo = resolveBrandLogo((settings && value(settings, 'logo')) || brand.logo);
   const configuredNav = settings ? items(settings, 'navigation') : defaultNav;
   const nav = configuredNav.filter((n) => n.visible !== false && value(n, 'url') && (value(n, 'url') !== '/resources' || content.resources?.visible === true));
   if (content.resources?.visible === true && !nav.some((n) => value(n, 'url') === '/resources')) {
@@ -38,8 +38,8 @@ export function Header() {
           <img
             className="full-logo"
             src={logo}
-            width="2172"
-            height="724"
+            width="3739"
+            height="849"
             alt={settings ? value(settings, 'name') || 'Heuresis Capital' : 'Heuresis Capital'}
           />
         </Link>
@@ -98,7 +98,8 @@ export function Footer({
 }) {
   const content = useWebsite();
   const settings = content?.settings;
-  const logo = (settings && value(settings, 'logo')) || brand.logo;
+  const logo = resolveBrandLogo((settings && value(settings, 'logo')) || brand.logo);
+  const builtInLogo = logo === brand.logo;
   const email = (settings && value(settings, 'email')) || contactEmail || brand.email;
   const footerText = (settings && value(settings, 'footerText')) || 'Considered perspectives on companies,\neconomies and market themes.';
   const copyright = (settings && value(settings, 'copyright')) || brand.name;
@@ -118,8 +119,8 @@ export function Footer({
       <div className="container">
         <div className="footer-top">
           <div>
-            <Link className="footer-logo" href="/">
-              <img src={logo} width="2172" height="724" alt="Heuresis Capital" />
+            <Link className={builtInLogo ? 'footer-logo' : 'footer-logo footer-logo-custom'} href="/">
+              <img src={builtInLogo ? brand.logoDark : logo} width="3739" height="849" alt="Heuresis Capital Research" />
             </Link>
             <p style={{ whiteSpace: 'pre-line' }}>{footerText}</p>
           </div>

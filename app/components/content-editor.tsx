@@ -12,6 +12,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { DeskHeader } from './research-desk';
+import { brand } from '@/lib/brand';
 import {
   definitions,
   emptyFields,
@@ -221,11 +222,12 @@ function EditorFields({
                 onChange={(e) => change(e.target.value)}
               >
                 <option value="">No file selected</option>
-                {f.type === 'image' && (
-                  <option value="/logo-approved.png">
-                    Approved Heuresis Capital logo
+                {f.type === 'image' && (<>
+                  <option value={brand.logo}>
+                    Heuresis Capital Research logo
                   </option>
-                )}
+                  <option value="/logo-approved.png">Built-in logo (previous setting)</option>
+                </>)}
                 {filtered.map((a) => (
                   <option key={a.id} value={a.url}>
                     {a.name}

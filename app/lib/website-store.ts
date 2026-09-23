@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { getDb } from '@/db';
+import { brand } from './brand';
 import { CmsError } from './cms-validation';
 import { definitions, defaultWebsite, assetIds, type Content, type Field } from './website-schema';
 
@@ -165,7 +166,7 @@ function validateFields(input: unknown, fields: Field[], path = ''): Content {
         ['image', 'file'].includes(f.type || '') &&
         s &&
         !/^\/assets\/[a-f0-9-]{36}$/.test(s) &&
-        !(f.type === 'image' && s === '/logo-approved.png')
+        !(f.type === 'image' && (s === '/logo-approved.png' || s === brand.logo))
       )
         throw new CmsError(label + ': choose an uploaded file.');
       out[f.key] = s;

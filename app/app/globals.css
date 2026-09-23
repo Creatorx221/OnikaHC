@@ -476,3 +476,18 @@ select.filter-select:focus-visible, .filter-select:focus-visible, select:focus-v
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* Approved Research wordmark: keep the full artwork visible at every width. */
+.logo-link{width:320px;max-width:100%;height:auto;overflow:visible}
+.full-logo{display:block;width:100%!important;height:auto}
+.site-footer{background:#1a2a41}
+.footer-logo{display:block;width:320px;max-width:100%;height:auto;padding:0;overflow:visible;position:static;background:transparent}
+.footer-logo img{display:block;width:100%;max-width:100%;height:auto;position:static;left:auto;top:auto;transform:none}
+.footer-logo-custom{background:#fff;padding:10px}
+.desk-header img{width:245px;max-width:100%;height:auto}
+@media(max-width:600px){
+  .logo-link{width:255px;max-width:calc(100% - 54px);height:auto}
+  .full-logo{width:100%!important}
+  .footer-logo{width:300px}
+}
+@media(max-width:760px){.desk-header img{width:225px}}
