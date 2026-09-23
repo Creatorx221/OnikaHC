@@ -7,6 +7,7 @@ import type {
   EditorRequest,
 } from './cms-types';
 import { CmsError, validateDraft, publicationIssues } from './cms-validation';
+
 type Row = {
   id: string;
   slug: string;
@@ -20,6 +21,7 @@ type Row = {
   published_at: string | null;
   updated_by: string;
 };
+
 type FileRow = {
   id: string;
   post_id: string;
@@ -28,7 +30,9 @@ type FileRow = {
   mime: string;
   size: number;
   created_at: string;
+  archived?: number;
 };
+
 export const materialView = (r: FileRow): Material => ({
   id: r.id,
   postId: r.post_id,
@@ -37,13 +41,16 @@ export const materialView = (r: FileRow): Material => ({
   size: r.size,
   createdAt: r.created_at,
   url: '/materials/' + r.id,
+  archived: r.archived ? 1 : 0,
 });
+
 export async function postRow(id: string) {
   return getDb()
     .prepare('SELECT * FROM research_posts WHERE id = ?')
     .bind(id)
     .first<Row>();
 }
+
 export async function postMaterials(id: string) {
   const r = await getDb()
     .prepare(
@@ -53,6 +60,7 @@ export async function postMaterials(id: string) {
     .all<FileRow>();
   return r.results.map(materialView);
 }
+
 function editorial(r: Row, materials: Material[] = []): EditorialPost {
   return {
     id: r.id,
@@ -67,24 +75,30 @@ function editorial(r: Row, materials: Material[] = []): EditorialPost {
     materials,
   };
 }
+
 export async function getEditorialPost(id: string) {
   const r = await postRow(id);
   return r ? editorial(r, await postMaterials(id)) : null;
 }
+
 export async function listEditorialPosts() {
   const r = await getDb()
     .prepare('SELECT * FROM research_posts ORDER BY updated_at DESC LIMIT 500')
     .all<Row>();
   return r.results.map((r) => editorial(r));
 }
+
 async function checkMaterials(postId: string, d: ResearchDraft) {
   if (!d.materialIds.length) return;
-  const ids = new Set((await postMaterials(postId)).map((m) => m.id));
-  if (d.materialIds.some((id) => !ids.has(id)))
+  const materials = await postMaterials(postId);
+  const activeIds = new Set(materials.filter((m) => !m.archived).map((m) => m.id));
+  if (d.materialIds.some((id) => !activeIds.has(id))) {
     throw new CmsError(
-      'One or more attachments do not belong to this article.',
+      'One or more attachments do not belong to this article or are archived.',
     );
+  }
 }
+
 export async function createEditorialPost(input: unknown, userId: string) {
   const d = validateDraft(input);
   if (d.materialIds.length)
@@ -108,6 +122,7 @@ export async function createEditorialPost(input: unknown, userId: string) {
   }
   return (await getEditorialPost(id))!;
 }
+
 export async function updateEditorialPost(
   id: string,
   input: unknown,
@@ -158,7 +173,12 @@ export async function updateEditorialPost(
   }
   const result = await getDb()
     .prepare(
-      'UPDATE research_posts SET draft_json=?,published_json=?,status=?,revision=?,published_revision=?,updated_at=?,published_at=?,updated_by=? WHERE id=? AND revision=?',
+      `UPDATE research_posts SET draft_json=?,published_json=?,status=?,revision=?,published_revision=?,updated_at=?,published_at=?,updated_by=?
+        WHERE id=? AND revision=? AND NOT EXISTS (
+          SELECT 1 FROM json_each(?) selected
+          LEFT JOIN research_materials m ON m.id=selected.value AND m.post_id=?
+          WHERE m.id IS NULL OR m.archived<>0
+        )`,
     )
     .bind(
       JSON.stringify(draft),
@@ -171,6 +191,8 @@ export async function updateEditorialPost(
       userId,
       id,
       revision,
+      JSON.stringify(draft.materialIds),
+      id,
     )
     .run();
   if (result.meta.changes !== 1)
@@ -180,11 +202,17 @@ export async function updateEditorialPost(
     );
   return (await getEditorialPost(id))!;
 }
+
 export function asResearch(
   d: ResearchDraft,
   materials: Material[],
   updated?: string,
 ): Research {
+  const map = new Map(materials.map((m) => [m.id, m]));
+  const orderedMaterials = d.materialIds
+    .map((id) => map.get(id))
+    .filter((m): m is Material => !!m && !m.archived);
+
   return {
     title: d.title,
     slug: d.slug,
@@ -210,9 +238,10 @@ export function asResearch(
     status: 'published',
     takeaways: d.takeaways,
     sections: d.sections,
-    materials: materials.filter((m) => d.materialIds.includes(m.id)),
+    materials: orderedMaterials,
   };
 }
+
 export async function publicResearch() {
   const rows = await getDb()
     .prepare(
@@ -221,7 +250,7 @@ export async function publicResearch() {
     .all<Row>();
   const files = await getDb()
     .prepare(
-      "SELECT m.* FROM research_materials m JOIN research_posts p ON p.id=m.post_id WHERE p.status='published' AND p.published_json IS NOT NULL",
+      "SELECT m.* FROM research_materials m JOIN research_posts p ON p.id=m.post_id WHERE m.archived=0 AND p.status='published' AND p.published_json IS NOT NULL",
     )
     .all<FileRow>();
   return rows.results.map((r) =>
@@ -232,20 +261,23 @@ export async function publicResearch() {
     ),
   );
 }
+
 export async function fileRecord(id: string) {
   return getDb()
     .prepare('SELECT * FROM research_materials WHERE id=?')
     .bind(id)
     .first<FileRow>();
 }
+
 export async function fileIsPublic(id: string) {
   return !!(await getDb()
     .prepare(
-      "SELECT m.id FROM research_materials m JOIN research_posts p ON p.id=m.post_id WHERE m.id=? AND p.status='published' AND p.published_json IS NOT NULL AND EXISTS (SELECT 1 FROM json_each(p.published_json,'$.materialIds') WHERE value=m.id)",
+      "SELECT m.id FROM research_materials m JOIN research_posts p ON p.id=m.post_id WHERE m.id=? AND m.archived=0 AND p.status='published' AND p.published_json IS NOT NULL AND EXISTS (SELECT 1 FROM json_each(p.published_json,'$.materialIds') WHERE value=m.id)",
     )
     .bind(id)
     .first());
 }
+
 export async function listEditorRequests() {
   const r = await getDb()
     .prepare(

@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Plus,
   Save,
@@ -11,6 +10,8 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Trash2,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import {
   emptyDraft,
@@ -38,12 +39,13 @@ type Action = 'publish' | 'unpublish' | 'archive' | 'restore' | 'leave';
 export function ResearchEditor({
   initial,
   author,
+  owner = false,
 }: {
   initial: EditorialPost | null;
   author: string;
+  owner?: boolean;
 }) {
-  const router = useRouter(),
-    [post, setPost] = useState(initial),
+  const [post, setPost] = useState(initial),
     [draft, setDraft] = useState<ResearchDraft>(
       initial?.draft || { ...emptyDraft(), author },
     ),
@@ -115,7 +117,7 @@ export function ResearchEditor({
         current = data.post as EditorialPost;
         setPost(current);
         setDraft(current.draft);
-        router.replace('/admin/research/' + current.id);
+        window.history.replaceState(null, '', '/admin/research/' + current.id);
         if (action === 'save') {
           setDirty(false);
           setNotice('Draft saved. You can now attach supporting materials.');
@@ -147,7 +149,6 @@ export function ResearchEditor({
                 ? 'Draft restored.'
                 : 'Draft saved. The live version is unchanged.',
       );
-      router.refresh();
     } catch (e) {
       setError(
         e instanceof Error
@@ -196,6 +197,83 @@ export function ResearchEditor({
       setUploading(false);
     }
   }
+
+  async function replaceMaterial(index: number, file: File) {
+    if (!post) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Choose a file up to 10 MB.');
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const r = await fetch('/api/admin/research/' + post.id + '/materials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'X-File-Name': encodeURIComponent(file.name),
+        },
+        body: file,
+      });
+      const data = (await r.json()) as {
+        error?: string;
+        material: Material;
+      };
+      if (!r.ok) throw Error(data.error);
+      const newMaterial = data.material as Material;
+      setPost((p) => (p ? { ...p, materials: [newMaterial, ...p.materials] } : p));
+      const nextIds = [...draft.materialIds];
+      nextIds[index] = newMaterial.id;
+      change('materialIds', nextIds);
+      setNotice('Replacement uploaded. It will replace the existing file at this position once published.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to replace file.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function moveMaterial(index: number, offset: number) {
+    const target = index + offset;
+    if (target < 0 || target >= draft.materialIds.length) return;
+    const nextIds = [...draft.materialIds];
+    const [moved] = nextIds.splice(index, 1);
+    nextIds.splice(target, 0, moved);
+    change('materialIds', nextIds);
+  }
+
+  function removeMaterial(id: string) {
+    change(
+      'materialIds',
+      draft.materialIds.filter((mid) => mid !== id),
+    );
+  }
+
+  async function toggleArchiveMaterial(materialId: string, action: 'archive' | 'restore') {
+    if (!post) return;
+    setPending(true);
+    setError('');
+    try {
+      const r = await fetch('/api/admin/research/' + post.id + '/materials', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: materialId, action }),
+      });
+      const data = (await r.json()) as { error?: string; materials: Material[] };
+      if (!r.ok) throw Error(data.error);
+      setPost((p) => (p ? { ...p, materials: data.materials } : p));
+      if (action === 'archive') {
+        removeMaterial(materialId);
+        setNotice('File archived.');
+      } else {
+        setNotice('File restored.');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update file.');
+    } finally {
+      setPending(false);
+    }
+  }
   const confirmations: Record<Action, [string, string]> = {
     publish: [
       'Publish this research?',
@@ -221,13 +299,13 @@ export function ResearchEditor({
   };
   return (
     <>
-      <DeskHeader />
+      <DeskHeader owner={owner}/>
       <main id="main" className="container desk-main">
         <div className="editor-top">
           <button
             className="text-link"
             onClick={() =>
-              dirty ? setConfirm('leave') : router.push('/admin')
+              dirty ? setConfirm('leave') : window.location.assign('/admin')
             }
           >
             <ArrowLeft size={16} />
@@ -328,8 +406,9 @@ export function ResearchEditor({
             </section>
             <section className="draft-section">
               <h3>Supporting materials</h3>
-              {post?.materials
-                .filter((m) => draft.materialIds.includes(m.id))
+              {draft.materialIds
+                .map((id) => post?.materials.find((m) => m.id === id))
+                .filter((m): m is Material => !!m && !m.archived)
                 .map((m) => (
                   <p key={m.id}>
                     <a href={m.url} target="_blank" rel="noopener noreferrer">
@@ -675,7 +754,7 @@ export function ResearchEditor({
                 <p className="eyebrow">Supporting materials</p>
                 <p>
                   PDFs, spreadsheets, documents and images. Up to 10 MB per
-                  file.
+                  file. Select up to 20 attachments.
                 </p>
                 {!post ? (
                   <p className="notice">Save the draft to enable uploads.</p>
@@ -701,46 +780,131 @@ export function ResearchEditor({
                         }}
                       />
                     </label>
-                    <p className="small">
-                      Select the files to include when this article is
-                      published.
+                    <p className="small" style={{ marginBottom: 12 }}>
+                      <strong>Selected attachments ({draft.materialIds.length}/20)</strong> · Reorder or replace:
                     </p>
-                    {post.materials.map((m) => (
-                      <div className="material-item" key={m.id}>
-                        <label className="desk-check">
-                          <Checkbox
-                            disabled={archived || pending}
-                            checked={draft.materialIds.includes(m.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked && draft.materialIds.length >= 20) {
-                                setError('Select up to 20 attachments.');
-                                return;
-                              }
-                              change(
-                                'materialIds',
-                                checked
-                                  ? [...draft.materialIds, m.id]
-                                  : draft.materialIds.filter(
-                                      (id) => id !== m.id,
-                                    ),
-                              );
-                            }}
-                          />
-                          <span>
-                            {m.name}
-                            <small>{(m.size / 1024).toFixed(0)} KB</small>
-                          </span>
-                        </label>
-                        <a
-                          className="small"
-                          href={m.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Open file
-                        </a>
-                      </div>
-                    ))}
+                    {draft.materialIds.map((id, i) => {
+                      const m = post.materials.find((x) => x.id === id);
+                      if (!m) return null;
+                      return (
+                        <div className="material-item" key={m.id} style={{ paddingBottom: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                            <div>
+                              <strong>{i + 1}. {m.name}</strong>
+                              <small>{(m.size / 1024).toFixed(0)} KB · Selected</small>
+                            </div>
+                            <div className="cms-order" style={{ flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                className="desk-icon"
+                                aria-label={`Move ${m.name} up`}
+                                disabled={i === 0 || archived || pending}
+                                onClick={() => moveMaterial(i, -1)}
+                              >
+                                <ArrowUp size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="desk-icon"
+                                aria-label={`Move ${m.name} down`}
+                                disabled={i === draft.materialIds.length - 1 || archived || pending}
+                                onClick={() => moveMaterial(i, 1)}
+                              >
+                                <ArrowDown size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="desk-icon danger"
+                                aria-label={`Remove ${m.name} from draft`}
+                                disabled={archived || pending}
+                                onClick={() => removeMaterial(m.id)}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 13 }}>
+                            <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-link">
+                              Open file
+                            </a>
+                            <label className="text-link" style={{ cursor: 'pointer' }}>
+                              Replace file
+                              <input
+                                type="file"
+                                style={{ display: 'none' }}
+                                accept=".pdf,.xlsx,.csv,.docx,.pptx,.png,.jpg,.jpeg"
+                                disabled={uploading || pending || archived}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) void replaceMaterial(i, file);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {draft.materialIds.length === 0 && (
+                      <p className="small" style={{ fontStyle: 'italic', marginBottom: 16 }}>
+                        No attachments selected.
+                      </p>
+                    )}
+                    {post.materials.some((m) => !draft.materialIds.includes(m.id)) && (
+                      <>
+                        <p className="small" style={{ marginTop: 20, marginBottom: 8, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                          <strong>Other uploaded files:</strong>
+                        </p>
+                        {post.materials
+                          .filter((m) => !draft.materialIds.includes(m.id))
+                          .map((m) => (
+                            <div className="material-item" key={m.id} style={{ opacity: m.archived ? 0.6 : 1 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                <div>
+                                  <span>{m.name}</span>
+                                  <small>
+                                    {(m.size / 1024).toFixed(0)} KB {m.archived ? '· Archived' : '· Not selected'}
+                                  </small>
+                                </div>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  {!m.archived ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        className="desk-secondary"
+                                        style={{ minHeight: 32, padding: '4px 8px', fontSize: 12 }}
+                                        disabled={archived || pending || draft.materialIds.length >= 20}
+                                        onClick={() => change('materialIds', [...draft.materialIds, m.id])}
+                                      >
+                                        Add
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="text-link"
+                                        style={{ fontSize: 12 }}
+                                        disabled={archived || pending}
+                                        onClick={() => toggleArchiveMaterial(m.id, 'archive')}
+                                      >
+                                        Archive
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="text-link"
+                                      style={{ fontSize: 12 }}
+                                      disabled={archived || pending}
+                                      onClick={() => toggleArchiveMaterial(m.id, 'restore')}
+                                    >
+                                      Restore
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </>
+                    )}
                   </>
                 )}
               </section>
@@ -797,7 +961,7 @@ export function ResearchEditor({
                 onClick={() => {
                   if (confirm === 'leave') {
                     setDirty(false);
-                    router.push('/admin');
+                    window.location.assign('/admin');
                   } else if (confirm) void save(confirm);
                 }}
               >

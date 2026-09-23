@@ -29,6 +29,7 @@ export const researchMaterials = sqliteTable(
     size: integer('size').notNull(),
     createdAt: text('created_at').notNull(),
     uploadedBy: text('uploaded_by').notNull(),
+    archived: integer('archived').notNull().default(0),
   },
   (t) => [index('idx_materials_post').on(t.postId)],
 );
@@ -40,4 +41,23 @@ export const editorRequests = sqliteTable('editor_requests', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
   reviewedBy: text('reviewed_by'),
+});
+export const websiteContent = sqliteTable('website_content', {
+  key: text('key').primaryKey(),
+  draftJson: text('draft_json').notNull(),
+  publishedJson: text('published_json'),
+  revision: integer('revision').notNull().default(1),
+  publishedRevision: integer('published_revision'),
+  updatedAt: text('updated_at').notNull(),
+  updatedBy: text('updated_by').notNull(),
+});
+export const websiteAssets = sqliteTable('website_assets', {
+  id: text('id').primaryKey(),
+  objectKey: text('object_key').notNull().unique(),
+  name: text('name').notNull(),
+  mime: text('mime').notNull(),
+  size: integer('size').notNull(),
+  archived: integer('archived').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+  uploadedBy: text('uploaded_by').notNull(),
 });

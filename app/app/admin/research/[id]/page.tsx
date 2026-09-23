@@ -17,5 +17,5 @@ export default async function Edit({
   }
   const post = id === 'new' ? null : await getEditorialPost(id);
   if (id !== 'new' && !post) notFound();
-  return <ResearchEditor initial={post} author={user.displayName} />;
+  return <ResearchEditor initial={post} author={user.displayName} owner={user.owner}/>;
 }

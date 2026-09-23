@@ -13,6 +13,7 @@ export type ResearchDraft = {
   materialIds: string[];
   featured: boolean;
 };
+
 export type Material = {
   id: string;
   postId: string;
@@ -21,7 +22,9 @@ export type Material = {
   size: number;
   createdAt: string;
   url: string;
+  archived?: number;
 };
+
 export type EditorialPost = {
   id: string;
   slug: string;
@@ -34,6 +37,7 @@ export type EditorialPost = {
   publishedAt: string | null;
   materials: Material[];
 };
+
 export type EditorRequest = {
   userId: string;
   email: string;
@@ -41,6 +45,7 @@ export type EditorRequest = {
   status: string;
   createdAt: string;
 };
+
 export const researchTypes = [
   'Equities',
   'Macro & Strategy',
@@ -48,6 +53,7 @@ export const researchTypes = [
   'Sectors & Themes',
   'Bespoke',
 ];
+
 export function emptyDraft(): ResearchDraft {
   return {
     title: '',

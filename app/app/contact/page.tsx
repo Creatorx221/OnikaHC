@@ -1,6 +1,22 @@
-import {site} from '@/lib/site-config';
-import {SectionLabel} from '@/components/site';
-import {EnquiryForm} from '@/components/enquiry-form';
-export const metadata={title:'Contact',description:'Begin a conversation about general enquiries, research access or bespoke research.',alternates:{canonical:'/contact'}};
-export default async function Contact({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){const p=await searchParams;const type=typeof p.type==='string'&&['general','bespoke','access'].includes(p.type)?p.type:'general';return <main id="main" className="container"><div className="page-intro"><SectionLabel>Begin a conversation</SectionLabel><h1>What would you like<br/>to understand?</h1><p className="lead">Share the question behind your research needs.<br/>A focused conversation is a useful place to begin.</p></div><div className="contact-grid"><aside className="contact-aside"><h2>A little context goes a long way.</h2><p>For a bespoke research discussion, it helps to consider:</p><ul><li>The analytical question or decision.</li><li>The companies, sector or market involved.</li><li>How you intend to use the research.</li><li>Any timing or scope constraints.</li></ul><div className="contact-direct"><span className="eyebrow">Contact Heuresis Capital</span><a href={"mailto:"+site.contactEmail}>{site.contactEmail}</a><p>Prefer to write directly? Send your question to our team.</p></div></aside><EnquiryForm policiesVisible={site.preview||site.policiesApproved} initialType={type} initialTopic={typeof p.topic==='string'?p.topic:''}/></div></main>;}
+import { value } from '@/lib/website-schema';
+import { publicWebsite } from '@/lib/website-store';
+import { WebsiteFrame } from '@/components/website-frame';
+import { ContactView } from '@/components/public-pages/contact';
 
+export const dynamic = 'force-dynamic';
+export default async function Contact({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const p = await searchParams;
+  const initialType = typeof p.type === 'string' && ['general', 'bespoke', 'access'].includes(p.type) ? p.type : 'general';
+  const initialTopic = typeof p.topic === 'string' ? p.topic : '';
+  const website = await publicWebsite();
+  return <WebsiteFrame data={website}><ContactView website={website} initialType={initialType} initialTopic={initialTopic} /></WebsiteFrame>;
+}
+
+export async function generateMetadata() {
+  const section = (await publicWebsite())['contact'];
+  return {
+    title: value(section, 'title').replace(/\s+/g, ' ').trim() || 'Contact',
+    description: value(section, 'intro') || value(section, 'description') || 'Contact',
+    alternates: { canonical: '/contact' },
+  };
+}

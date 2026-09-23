@@ -1,10 +1,10 @@
 /* eslint-disable next/no-img-element, next/no-html-link-for-pages -- Keep the approved logo asset and full navigation for unsaved-work protection and Sites sign-out. */
 'use client';
-import Link from 'next/link';
+import Link from '@/components/navigation';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus, ArrowUpRight, FileText, Users } from 'lucide-react';
 import type { EditorialPost, EditorRequest } from '@/lib/cms-types';
+import { brand } from '@/lib/brand';
 import { Choice } from './library';
 import {
   Table,
@@ -25,18 +25,20 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-export function DeskHeader({ children }: { children?: React.ReactNode }) {
+export function DeskHeader({ children, owner = false }: { children?: React.ReactNode; owner?: boolean }) {
   return (
     <header className="desk-header">
       <a href="/admin" aria-label="Research desk home">
         <img
-          src="/logo-modern.png"
+          src={brand.logo}
           width="2172"
           height="724"
           alt="Heuresis Capital"
         />
       </a>
       <nav aria-label="Research desk navigation">
+        <a href="/admin">Research</a>
+        {owner && <><a href="/admin/content">Website content</a><a href="/admin/content/team">Team profiles</a><a href="/admin/files">Files</a><a href="/admin/team">Access</a></>}
         {children}
         <a href="/research" target="_blank" rel="noopener noreferrer">
           View website <ArrowUpRight size={15} />
@@ -77,14 +79,7 @@ export function DeskDashboard({
   );
   return (
     <>
-      <DeskHeader>
-        {owner && (
-          <Link href="/admin/team">
-            <Users size={16} />
-            Team access
-          </Link>
-        )}
-      </DeskHeader>
+      <DeskHeader owner={owner}/>
       <main id="main" className="container desk-main">
         <div className="desk-heading">
           <div>
@@ -253,8 +248,7 @@ export function AccessRequest({ requested }: { requested: boolean }) {
   );
 }
 export function TeamAccess({ entries }: { entries: EditorRequest[] }) {
-  const router = useRouter(),
-    [rows, setRows] = useState(entries),
+  const [rows, setRows] = useState(entries),
     [pending, setPending] = useState(false),
     [error, setError] = useState(''),
     [choice, setChoice] = useState<{
@@ -284,7 +278,6 @@ export function TeamAccess({ entries }: { entries: EditorRequest[] }) {
         ),
       );
       setChoice(null);
-      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to update access.');
     } finally {
@@ -293,9 +286,7 @@ export function TeamAccess({ entries }: { entries: EditorRequest[] }) {
   }
   return (
     <>
-      <DeskHeader>
-        <Link href="/admin">Research desk</Link>
-      </DeskHeader>
+      <DeskHeader owner/>
       <main id="main" className="container desk-main">
         <div className="desk-heading">
           <div>

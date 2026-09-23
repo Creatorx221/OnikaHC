@@ -1,0 +1,5 @@
+import {getBucket} from '@/db';
+import {editorSession} from '@/lib/cms-auth';
+import {getAsset,assetIsPublic} from '@/lib/website-store';
+export const dynamic='force-dynamic';
+export async function GET(_r:Request,{params}:{params:Promise<{id:string}>}){try{const id=(await params).id,a=await getAsset(id);if(!a||(!(await assetIsPublic(id))&&!(await editorSession())?.owner))return new Response('File not found',{status:404,headers:{'Cache-Control':'no-store'}});const o=await getBucket().get(a.object_key);if(!o)return new Response('File not found',{status:404,headers:{'Cache-Control':'no-store'}});return new Response(o.body,{headers:{'Content-Type':a.mime,'Content-Length':String(a.size),'Content-Disposition':(a.mime.startsWith('image/')?'inline':'attachment')+"; filename*=UTF-8''"+encodeURIComponent(a.name),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});}catch(e){console.error('Website asset unavailable',e);return new Response('File temporarily unavailable',{status:503,headers:{'Cache-Control':'no-store'}});}}

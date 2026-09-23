@@ -1,6 +1,19 @@
-import Link from 'next/link';
-import {site} from '@/lib/site-config';
-import {SectionLabel,Approach,Newsletter} from '@/components/site';
-export const metadata={title:'About Heuresis',description:'The purpose and proposed research philosophy behind Heuresis Capital.',alternates:{canonical:'/about'}};
-export default function About(){return <main id="main"><div className="container"><div className="page-intro"><SectionLabel>About Heuresis</SectionLabel><h1>A considered perspective.<br/>A clearer understanding.</h1><p className="lead">Heuresis Capital is a new capital markets research firm founded by a group of friends.</p></div><section className="about-lead"><div className="about-statement"><p>Good research gives a question the attention it deserves.</p></div><div><p>Our purpose is to make companies, economies and market themes easier to understand through careful analysis and clear writing.</p><p>We are building a research publication and a place to begin conversations about specific analytical questions.</p>{site.preview&&<p className="small">Purpose and positioning are proposed copy for founder review. Geographic coverage and service availability have not yet been confirmed.</p>}</div></section></div>{(site.preview||site.approachApproved)&&<section id="approach" className="warm section"><div className="container"><SectionLabel>The way we think</SectionLabel><h2>Make the reasoning visible.</h2><p className="lead">Define the question. Show the evidence. Explain where assumptions begin and what could change the conclusion.</p>{site.preview&&<p className="notice">The sequence below is a proposed editorial approach, not a claim of an established or audited process.</p>}<Approach/>{(site.preview||site.policiesApproved)&&<Link className="text-link" style={{marginTop:35}} href="/research-disclosures">Methodology and research disclosures</Link>}</div></section>}{site.team.length>0&&<section className="container section"><SectionLabel>Our people</SectionLabel><h2>The team</h2>{site.team.map(p=><article className="service-row" key={p.name}>{p.photo&&<img src={p.photo} alt={p.name}/>}<div><h3>{p.name}</h3><p>{p.role}</p></div><p>{p.bio}</p></article>)}</section>}<Newsletter policiesVisible={site.preview||site.policiesApproved}/></main>;}
+import { value } from '@/lib/website-schema';
+import { publicWebsite } from '@/lib/website-store';
+import { WebsiteFrame } from '@/components/website-frame';
+import { AboutView } from '@/components/public-pages/about';
 
+export const dynamic = 'force-dynamic';
+export default async function About() {
+  const website = await publicWebsite();
+  return <WebsiteFrame data={website}><AboutView website={website} /></WebsiteFrame>;
+}
+
+export async function generateMetadata() {
+  const section = (await publicWebsite())['about'];
+  return {
+    title: value(section, 'title').replace(/\s+/g, ' ').trim() || 'About Heuresis',
+    description: value(section, 'intro') || value(section, 'description') || 'About Heuresis',
+    alternates: { canonical: '/about' },
+  };
+}

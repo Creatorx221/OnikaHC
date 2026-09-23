@@ -38,3 +38,13 @@ Completed on 6 September 2026.
 - Five unapproved-user checks passed after restarting with a separate owner configuration: access requests are allowed, but reading drafts, creating research and self-approval are rejected.
 - Test content and files exist only in the local database; the test publication was archived.
 - Browser automation was not performed for this backend update. Earlier visual checks below relate to the previous public website revision.
+
+## Website and publishing integration — 23 September 2026
+
+- Verified the Gemini delivery manifest against all 21 changed files and the handoff source snapshot before integration. Kept the exact approved logo image.
+- `pnpm exec tsc --noEmit` and `pnpm build` passed after integration.
+- The existing publishing test completed 37 local HTTP checks. The expanded website test completed 76 local HTTP checks, including draft privacy, owner preview, team photo publication and removal, standalone file access, research attachment order and replacement, and archive safeguards.
+- The signed-in non-owner access test passed its five checks with a separate local owner setting. The original local owner setting was restored afterward.
+- Applied both migrations to a separate local D1 instance for the built Worker. Browser clicks on the production-built homepage reached Research and Contact with the expected pages and controls. This specifically rechecks the earlier production navigation failure.
+- Repository-wide `pnpm lint` still reports existing generated UI and application warnings, including Next.js `<img>` and native link rules. The production build, type check and behavior checks are the release gates used here; lint is not recorded as passing.
+- All generated research, images and documents used by the tests were local fixtures. No production research or file records were changed by these checks.

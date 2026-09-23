@@ -1,8 +1,47 @@
-import {notFound} from 'next/navigation';
-import {site} from '@/lib/site-config';
-import {policies} from '@/lib/policies';
-import {SectionLabel} from '@/components/site';
-function getPolicy(p:string){return Object.prototype.hasOwnProperty.call(policies,p)?policies[p as keyof typeof policies]:null;}
-export async function generateMetadata({params}:{params:Promise<{policy:string}>}){const{policy}=await params,p=getPolicy(policy);return{title:p?.title||'Page not found',description:p?.intro,alternates:{canonical:'/'+policy},robots:site.preview||!site.policiesApproved?{index:false,follow:false}:{index:true,follow:true}};}
-export default async function Policy({params}:{params:Promise<{policy:string}>}){const{policy}=await params,p=getPolicy(policy);if(!p||(!site.preview&&!site.policiesApproved))notFound();return <main id="main" className="container"><div className="policy"><div className="page-intro"><SectionLabel>{site.policiesApproved?'Website information':'Draft · Review required'}</SectionLabel><h1>{p.title}</h1><div className="notice">{p.intro}</div></div>{p.sections.map(([h,t])=><section key={h}><h2>{h}</h2><p>{t}</p></section>)}</div></main>;}
+import { notFound } from 'next/navigation';
+import { site } from '@/lib/site-config';
+import { policies } from '@/lib/policies';
+import { publicWebsite } from '@/lib/website-store';
+import { value, enabled } from '@/lib/website-schema';
+import { SectionLabel } from '@/components/site';
 
+function getPolicy(p: string) {
+  return Object.prototype.hasOwnProperty.call(policies, p)
+    ? policies[p as keyof typeof policies]
+    : null;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ policy: string }>;
+}) {
+  const { policy } = await params;
+  const p = getPolicy(policy);
+  const website = await publicWebsite();
+  const policyContent = website[policy];
+
+  const title = (policyContent && value(policyContent, 'title')) || p?.title || 'Page not found';
+  const intro = (policyContent && value(policyContent, 'intro')) || p?.intro;
+  const isVisible = policyContent ? enabled(policyContent, 'visible') : site.preview || site.policiesApproved;
+
+  return {
+    title,
+    description: intro,
+    alternates: { canonical: '/' + policy },
+    robots: !isVisible ? { index: false, follow: false } : { index: true, follow: true },
+  };
+}
+
+import { WebsiteFrame } from '@/components/website-frame';
+import { PolicyView } from '@/components/public-pages/policy';
+export default async function Policy({ params }: { params: Promise<{policy:string}> }) {
+  const { policy } = await params;
+  const fallback = getPolicy(policy);
+  if (!fallback) notFound();
+  const website = await publicWebsite();
+  const policyContent = website[policy];
+  const isVisible = policyContent ? enabled(policyContent, 'visible') : site.preview || site.policiesApproved;
+  if (!isVisible && !site.preview) notFound();
+  return <WebsiteFrame data={website}><PolicyView policyContent={policyContent} fallback={fallback} isVisible={isVisible} /></WebsiteFrame>;
+}
