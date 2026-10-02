@@ -4,6 +4,7 @@ import { policies } from '@/lib/policies';
 import { publicWebsite } from '@/lib/website-store';
 import { value, enabled } from '@/lib/website-schema';
 import { SectionLabel } from '@/components/site';
+import { localeFromParams, localizeWebsite } from '@/lib/i18n';
 
 function getPolicy(p: string) {
   return Object.prototype.hasOwnProperty.call(policies, p)
@@ -35,13 +36,14 @@ export async function generateMetadata({
 
 import { WebsiteFrame } from '@/components/website-frame';
 import { PolicyView } from '@/components/public-pages/policy';
-export default async function Policy({ params }: { params: Promise<{policy:string}> }) {
+export default async function Policy({ params, searchParams }: { params: Promise<{policy:string}>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { policy } = await params;
+  const locale = localeFromParams(await searchParams);
   const fallback = getPolicy(policy);
   if (!fallback) notFound();
-  const website = await publicWebsite();
+  const website = localizeWebsite(await publicWebsite(), locale);
   const policyContent = website[policy];
   const isVisible = policyContent ? enabled(policyContent, 'visible') : site.preview || site.policiesApproved;
   if (!isVisible && !site.preview) notFound();
-  return <WebsiteFrame data={website}><PolicyView policyContent={policyContent} fallback={fallback} isVisible={isVisible} /></WebsiteFrame>;
+  return <WebsiteFrame data={website} locale={locale}><PolicyView policyContent={policyContent} fallback={fallback} isVisible={isVisible} locale={locale} /></WebsiteFrame>;
 }

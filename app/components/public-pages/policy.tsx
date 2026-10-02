@@ -1,7 +1,8 @@
 import { value, type Content } from '@/lib/website-schema';
 import { SectionLabel } from '@/components/site';
+import { t, type Locale } from '@/lib/i18n';
 
-export function PolicyView({ policyContent, fallback, isVisible }: { policyContent: Content | undefined; fallback: {title:string;intro:string;sections:ReadonlyArray<readonly [string,string]>}; isVisible:boolean }) {
+export function PolicyView({ policyContent, fallback, isVisible, locale = 'en' }: { policyContent: Content | undefined; fallback: {title:string;intro:string;sections:ReadonlyArray<readonly [string,string]>}; isVisible:boolean; locale?:Locale }) {
   const title = (policyContent && value(policyContent, 'title')) || fallback.title;
   const intro = (policyContent && value(policyContent, 'intro')) || fallback.intro;
   const sections = (policyContent && Array.isArray(policyContent.sections)
@@ -13,7 +14,7 @@ export function PolicyView({ policyContent, fallback, isVisible }: { policyConte
       <div className="policy">
         <div className="page-intro">
           <SectionLabel>
-            {isVisible ? 'Website information' : 'Draft · Review required'}
+            {t(locale, isVisible ? 'Website information' : 'Draft · Review required')}
           </SectionLabel>
           <h1>{title}</h1>
           <div className="notice" style={{ whiteSpace: 'pre-line' }}>
@@ -22,8 +23,8 @@ export function PolicyView({ policyContent, fallback, isVisible }: { policyConte
         </div>
         {sections.map((s, idx) => (
           <section key={idx}>
-            <h2>{s.title}</h2>
-            <p style={{ whiteSpace: 'pre-line' }}>{s.body}</p>
+            <h2>{t(locale, s.title)}</h2>
+            <p style={{ whiteSpace: 'pre-line' }}>{t(locale, s.body)}</p>
           </section>
         ))}
       </div>

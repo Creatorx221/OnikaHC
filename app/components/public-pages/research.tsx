@@ -8,8 +8,9 @@ import { Library } from '@/components/library';
 
 import type { Content } from '@/lib/website-schema';
 import type { Research } from '@/lib/research';
+import type { Locale } from '@/lib/i18n';
 
-export function ResearchView({ website, reports, initial }: { website: Record<string, Content>; reports: Research[]; initial: {q: string;type: string;topic: string} }) {
+export function ResearchView({ website, reports, initial, locale = 'en' }: { website: Record<string, Content>; reports: Research[]; initial: {q: string;type: string;topic: string}; locale?: Locale }) {
   const research = website.research;
 
   const eyebrow = (research && value(research, 'eyebrow')) || 'The research library';
@@ -33,7 +34,7 @@ export function ResearchView({ website, reports, initial }: { website: Record<st
           </div>
         )}
       </div>
-      <Library items={reports} initial={initial} />
+      <Library items={reports} initial={initial} locale={locale} />
     </main>
   );
 }

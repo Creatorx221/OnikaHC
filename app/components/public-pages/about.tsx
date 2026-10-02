@@ -3,11 +3,12 @@ import { ArrowUpRight } from 'lucide-react';
 import { site } from '@/lib/site-config';
 import { value, enabled, items, type Content } from '@/lib/website-schema';
 import { SectionLabel, Approach, Newsletter } from '@/components/site';
+import { t, type Locale } from '@/lib/i18n';
 
 
 
 
-export function AboutView({ website }: { website: Record<string, Content> }) {
+export function AboutView({ website, locale = 'en' }: { website: Record<string, Content>; locale?: Locale }) {
   const about = website.about;
   const approach = website.approach;
   const team = website.team;
@@ -37,8 +38,8 @@ export function AboutView({ website }: { website: Record<string, Content> }) {
     'Define the question. Show the evidence. Explain where assumptions begin and what could change the conclusion.';
 
   const showTeam = team ? enabled(team, 'visible') : true;
-  const teamEyebrow = (team && value(team, 'eyebrow')) || 'Our people';
-  const teamTitle = (team && value(team, 'title')) || 'The team';
+  const teamEyebrow = (team && value(team, 'eyebrow')) || t(locale, 'Our people');
+  const teamTitle = (team && value(team, 'title')) || t(locale, 'The team');
   const teamIntro = team && value(team, 'intro');
   const teamMembers = (team && (items(team, 'members') as Content[]).filter((m) => m.visible !== false)) || [];
 
@@ -90,7 +91,7 @@ export function AboutView({ website }: { website: Record<string, Content> }) {
             <Approach />
             {(site.preview || site.policiesApproved) && (
               <Link className="text-link" style={{ marginTop: 35 }} href="/research-disclosures">
-                Methodology and research disclosures
+                {t(locale, 'Methodology and research disclosures')}
               </Link>
             )}
           </div>
@@ -138,7 +139,7 @@ export function AboutView({ website }: { website: Record<string, Content> }) {
                           rel="noopener noreferrer"
                           className="text-link"
                         >
-                          Profile <ArrowUpRight size={14} />
+                          {t(locale, 'Profile')} <ArrowUpRight size={14} />
                         </a>
                       )}
                     </div>
@@ -148,7 +149,7 @@ export function AboutView({ website }: { website: Record<string, Content> }) {
             </div>
           ) : (
             <div className="editorial-empty">
-              <p>Our team profiles will appear here once published.</p>
+              <p>{t(locale, 'Our team profiles will appear here once published.')}</p>
             </div>
           )}
         </section>

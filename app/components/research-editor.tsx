@@ -18,6 +18,7 @@ import {
   researchTypes,
   type EditorialPost,
   type ResearchDraft,
+  type ResearchTranslation,
   type Material,
 } from '@/lib/cms-types';
 import { publicationIssues } from '@/lib/cms-validation';
@@ -77,6 +78,22 @@ export function ResearchEditor({
     setDraft((d) => ({ ...d, [key]: value }));
     setDirty(true);
     setNotice('');
+  }
+  function translationFor(locale: 'fr' | 'it'): ResearchTranslation {
+    const saved = draft.translations?.[locale];
+    return {
+      title: saved?.title || '',
+      summary: saved?.summary || '',
+      takeaways: [0, 1, 2].map((i) => saved?.takeaways?.[i] || ''),
+      sections: draft.sections.map((section, i) => ({
+        title: saved?.sections?.[i]?.title || '',
+        paragraphs: section.paragraphs.map((_, j) => saved?.sections?.[i]?.paragraphs?.[j] || ''),
+      })),
+      disclosures: saved?.disclosures || '',
+    };
+  }
+  function changeTranslation(locale: 'fr' | 'it', update: (edition: ResearchTranslation) => ResearchTranslation) {
+    change('translations', { ...draft.translations, [locale]: update(translationFor(locale)) });
   }
   function titleChange(value: string) {
     setDraft((d) => ({
@@ -718,6 +735,26 @@ export function ResearchEditor({
                       placeholder="Explain the scope, assumptions, limitations, authorship, sponsorship and any relevant conflicts."
                     />
                   </div>
+                </section>
+                <section className="editor-block">
+                  <p className="eyebrow">05 · French and Italian editions</p>
+                  <p className="small">Add reviewed translations when ready. An edition appears only after its title, summary, three takeaways, every section and disclosures are complete, then you publish the article again. Otherwise readers see the English original.</p>
+                  {(['fr', 'it'] as const).map((locale) => {
+                    const edition = translationFor(locale);
+                    const language = locale === 'fr' ? 'French' : 'Italian';
+                    return <details className="research-translation" key={locale}>
+                      <summary>{language} edition</summary>
+                      <div className="form-field"><label htmlFor={`${locale}-title`}>{language} title</label><input id={`${locale}-title`} maxLength={200} value={edition.title} onChange={(e) => changeTranslation(locale, (current) => ({ ...current, title: e.target.value }))} /></div>
+                      <div className="form-field"><label htmlFor={`${locale}-summary`}>{language} summary</label><textarea id={`${locale}-summary`} maxLength={1000} rows={3} value={edition.summary} onChange={(e) => changeTranslation(locale, (current) => ({ ...current, summary: e.target.value }))} /></div>
+                      {edition.takeaways.map((takeaway, i) => <div className="form-field" key={i}><label htmlFor={`${locale}-takeaway-${i}`}>Takeaway {i + 1}</label><textarea id={`${locale}-takeaway-${i}`} maxLength={600} rows={2} value={takeaway} onChange={(e) => changeTranslation(locale, (current) => ({ ...current, takeaways: current.takeaways.map((item, index) => index === i ? e.target.value : item) }))} /></div>)}
+                      {edition.sections.map((section, i) => <div className="research-translation-section" key={i}>
+                        <strong>Section {i + 1}</strong>
+                        <div className="form-field"><label htmlFor={`${locale}-section-${i}-title`}>Heading</label><input id={`${locale}-section-${i}-title`} maxLength={180} value={section.title} onChange={(e) => changeTranslation(locale, (current) => ({ ...current, sections: current.sections.map((item, index) => index === i ? { ...item, title: e.target.value } : item) }))} /></div>
+                        {section.paragraphs.map((paragraph, j) => <div className="form-field" key={j}><label htmlFor={`${locale}-section-${i}-paragraph-${j}`}>Paragraph {j + 1}</label><textarea id={`${locale}-section-${i}-paragraph-${j}`} maxLength={12000} rows={5} value={paragraph} onChange={(e) => changeTranslation(locale, (current) => ({ ...current, sections: current.sections.map((item, index) => index === i ? { ...item, paragraphs: item.paragraphs.map((text, paragraphIndex) => paragraphIndex === j ? e.target.value : text) } : item) }))} /></div>)}
+                      </div>)}
+                      <div className="form-field"><label htmlFor={`${locale}-disclosures`}>{language} disclosures</label><textarea id={`${locale}-disclosures`} maxLength={6000} rows={5} value={edition.disclosures} onChange={(e) => changeTranslation(locale, (current) => ({ ...current, disclosures: e.target.value }))} /></div>
+                    </details>;
+                  })}
                 </section>
               </fieldset>
             </form>

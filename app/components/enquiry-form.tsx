@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Link from '@/components/navigation';
 import { ArrowUpRight, Mail } from 'lucide-react';
 import { brand } from '@/lib/brand';
-import { useWebsite } from '@/components/website-context';
+import { useWebsite, useWebsiteLanguage } from '@/components/website-context';
 import { value } from '@/lib/website-schema';
+import { t } from '@/lib/i18n';
 import { Choice } from './library';
 
 const enquiryTypes = [
@@ -28,6 +29,7 @@ export function EnquiryForm({
   formIntro?: string;
 }) {
   const content = useWebsite();
+  const locale = useWebsiteLanguage();
   const settings = content.settings;
   const recipientEmail = (settings && value(settings, 'email')) || brand.email;
 
@@ -38,19 +40,19 @@ export function EnquiryForm({
     e.preventDefault();
     const fields = new FormData(e.currentTarget);
     const getVal = (name: string) => String(fields.get(name) || '').trim();
-    const label = enquiryTypes.find((option) => option.value === type)?.label || 'General enquiry';
+    const label = t(locale, enquiryTypes.find((option) => option.value === type)?.label || 'General enquiry');
     const subject = label + ' — Heuresis Capital' + (getVal('topic') ? ' — ' + getVal('topic') : '');
     const body = [
-      'Hello Heuresis Capital,',
+      t(locale, 'Hello Heuresis Capital,'),
       '',
       getVal('message'),
       '',
-      'Name: ' + getVal('name'),
-      'Email: ' + getVal('email'),
-      getVal('organisation') && 'Organisation: ' + getVal('organisation'),
-      type === 'bespoke' && getVal('topic') && 'Research topic: ' + getVal('topic'),
-      type === 'bespoke' && getVal('geography') && 'Geography: ' + getVal('geography'),
-      type === 'bespoke' && getVal('timing') && 'Desired timing: ' + getVal('timing'),
+      t(locale, 'Name:') + ' ' + getVal('name'),
+      t(locale, 'Email:') + ' ' + getVal('email'),
+      getVal('organisation') && t(locale, 'Organisation:') + ' ' + getVal('organisation'),
+      type === 'bespoke' && getVal('topic') && t(locale, 'Research topic:') + ' ' + getVal('topic'),
+      type === 'bespoke' && getVal('geography') && t(locale, 'Geography:') + ' ' + getVal('geography'),
+      type === 'bespoke' && getVal('timing') && t(locale, 'Desired timing:') + ' ' + getVal('timing'),
     ]
       .filter((line) => line !== false)
       .join('\r\n');
@@ -65,99 +67,99 @@ export function EnquiryForm({
   return (
     <form className="enquiry-form" onSubmit={prepare} onChange={() => setDraft(null)}>
       <div className="enquiry-intro">
-        <h2>{formTitle || 'Start with your question.'}</h2>
-        <p>{formIntro || 'Prepare your message below, then open it in your email app to review and send.'}</p>
+        <h2>{formTitle || t(locale, 'Start with your question.')}</h2>
+        <p>{formIntro || t(locale, 'Prepare your message below, then open it in your email app to review and send.')}</p>
       </div>
       <div className="form-grid">
         <div className="form-field">
-          <label htmlFor="name">Name</label>
+          <label htmlFor="name">{t(locale, 'Name')}</label>
           <input name="name" id="name" autoComplete="name" required maxLength={120} />
         </div>
         <div className="form-field">
-          <label htmlFor="email">Email address</label>
+          <label htmlFor="email">{t(locale, 'Email address')}</label>
           <input name="email" id="email" type="email" autoComplete="email" required maxLength={254} />
         </div>
         <div className="form-field form-wide">
           <label htmlFor="organisation">
-            Organisation <span className="optional">(optional)</span>
+            {t(locale, 'Organisation')} <span className="optional">{t(locale, '(optional)')}</span>
           </label>
           <input name="organisation" id="organisation" autoComplete="organization" maxLength={160} />
         </div>
         <div className="form-wide">
           <Choice
             id="enquiry-type"
-            label="Enquiry type"
+            label={t(locale, 'Enquiry type')}
             value={type}
             onChange={(value) => {
               setType(value);
               setDraft(null);
             }}
-            options={enquiryTypes}
+            options={enquiryTypes.map((option) => ({ ...option, label: t(locale, option.label) }))}
           />
         </div>
         {type === 'bespoke' && (
           <>
             <div className="form-field form-wide">
               <label htmlFor="topic">
-                Research topic <span className="optional">(optional)</span>
+                {t(locale, 'Research topic')} <span className="optional">{t(locale, '(optional)')}</span>
               </label>
               <input
                 name="topic"
                 id="topic"
                 defaultValue={initialTopic}
-                placeholder="What would you like to understand?"
+                placeholder={t(locale, 'What would you like to understand?')}
                 maxLength={240}
               />
             </div>
             <div className="form-field">
               <label htmlFor="geography">
-                Geography <span className="optional">(optional)</span>
+                {t(locale, 'Geography')} <span className="optional">{t(locale, '(optional)')}</span>
               </label>
               <input name="geography" id="geography" maxLength={120} />
             </div>
             <div className="form-field">
               <label htmlFor="timing">
-                Desired timing <span className="optional">(optional)</span>
+                {t(locale, 'Desired timing')} <span className="optional">{t(locale, '(optional)')}</span>
               </label>
               <input name="timing" id="timing" maxLength={120} />
             </div>
           </>
         )}
         <div className="form-field form-wide">
-          <label htmlFor="message">Your message</label>
+          <label htmlFor="message">{t(locale, 'Your message')}</label>
           <textarea
             id="message"
             name="message"
             required
             minLength={10}
             maxLength={2000}
-            placeholder="Tell us about the question, its context and what you need to understand."
+            placeholder={t(locale, 'Tell us about the question, its context and what you need to understand.')}
           />
         </div>
       </div>
       <p className="small enquiry-note">
-        Your details stay on this page until you choose to send the email. An enquiry does not subscribe you to marketing.{' '}
-        {policiesVisible && <Link href="/privacy">Privacy notice</Link>}
+        {t(locale, 'Your details stay on this page until you choose to send the email. An enquiry does not subscribe you to marketing.')}{' '}
+        {policiesVisible && <Link href="/privacy">{t(locale, 'Privacy notice')}</Link>}
       </p>
       <button className="button" type="submit">
-        Prepare email <ArrowUpRight size={17} />
+        {t(locale, 'Prepare email')} <ArrowUpRight size={17} />
       </button>
       {draft && (
         <section className="email-draft" aria-label="Prepared email">
           <p className="eyebrow" role="status">
-            Your email draft is ready
+            {t(locale, 'Your email draft is ready')}
           </p>
           <p className="draft-recipient">
-            To: <strong>{recipientEmail}</strong>
+            {t(locale, 'To:')} <strong>{recipientEmail}</strong>
           </p>
           <h3>{draft.subject}</h3>
           <pre>{draft.body}</pre>
           <a className="button" href={draft.href}>
             <Mail size={17} />
-            Open email app
+            {t(locale, 'Open email app')}
           </a>
           <p className="small">
-            Nothing has been sent yet. Review and send in your email app, or copy this message into your webmail.
+            {t(locale, 'Nothing has been sent yet. Review and send in your email app, or copy this message into your webmail.')}
           </p>
         </section>
       )}

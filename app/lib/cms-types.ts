@@ -1,3 +1,11 @@
+export type ResearchTranslation = {
+  title: string;
+  summary: string;
+  takeaways: string[];
+  sections: { title: string; paragraphs: string[] }[];
+  disclosures: string;
+};
+
 export type ResearchDraft = {
   title: string;
   slug: string;
@@ -12,6 +20,7 @@ export type ResearchDraft = {
   disclosures: string;
   materialIds: string[];
   featured: boolean;
+  translations?: Partial<Record<'fr' | 'it', ResearchTranslation>>;
 };
 
 export type Material = {
@@ -69,5 +78,6 @@ export function emptyDraft(): ResearchDraft {
     disclosures: '',
     materialIds: [],
     featured: false,
+    translations: {},
   };
 }

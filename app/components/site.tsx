@@ -2,12 +2,13 @@
 
 import Link from '@/components/navigation';
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowRight, Menu, Mail, Copy, Check, Printer } from 'lucide-react';
+import { ArrowUpRight, Menu, Mail, Copy, Check, Printer } from 'lucide-react';
 import { Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { brand, resolveBrandLogo } from '@/lib/brand';
 import { site } from '@/lib/site-config';
-import { useWebsite } from '@/components/website-context';
+import { useWebsite, useWebsiteLanguage } from '@/components/website-context';
 import { value, items } from '@/lib/website-schema';
+import { languages, t } from '@/lib/i18n';
 import type { Research } from '@/lib/research';
 
 const defaultNav = [
@@ -17,12 +18,34 @@ const defaultNav = [
   { label: 'Contact', url: '/contact', visible: true },
 ];
 
+function LanguageSwitcher() {
+  const locale = useWebsiteLanguage();
+  return <fieldset className="language-switcher"><legend className="language-legend">Website language</legend>
+    {languages.map((language) => <a
+      key={language.code}
+      href={'?lang=' + language.code}
+      lang={language.code}
+      hrefLang={language.code}
+      aria-label={language.label}
+      aria-current={locale === language.code ? 'true' : undefined}
+      onClick={(event) => {
+        event.preventDefault();
+        const url = new URL(window.location.href);
+        if (language.code === 'en') url.searchParams.delete('lang');
+        else url.searchParams.set('lang', language.code);
+        window.location.assign(url.pathname + url.search + url.hash);
+      }}
+    >{language.short}</a>)}
+  </fieldset>;
+}
+
 export function Header() {
   const [open, setOpen] = useState(false);
   const [path, setPath] = useState('');
   useEffect(() => setPath(window.location.pathname), []);
 
   const content = useWebsite();
+  const locale = useWebsiteLanguage();
   const settings = content?.settings;
   const logo = resolveBrandLogo((settings && value(settings, 'logo')) || brand.logo);
   const configuredNav = settings ? items(settings, 'navigation') : defaultNav;
@@ -51,12 +74,13 @@ export function Header() {
               aria-current={path === String(item.url) ? 'page' : undefined}
               href={String(item.url)}
             >
-              {String(item.label)}
+              {t(locale, String(item.label))}
             </Link>
           ))}
           {content.newsletter?.visible === true && <Link className="header-subscribe" href="/#newsletter">
-            Research updates <ArrowUpRight size={15} />
+            {t(locale, 'Research updates')} <ArrowUpRight size={15} />
           </Link>}
+          <LanguageSwitcher />
         </nav>
         <div className="mobile-nav">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -69,14 +93,15 @@ export function Header() {
               <nav aria-label="Mobile navigation">
                 {nav.map((item) => (
                   <Link key={String(item.url)} href={String(item.url)} onClick={() => setOpen(false)}>
-                    {String(item.label)}
+                    {t(locale, String(item.label))}
                     <ArrowUpRight size={18} />
                   </Link>
                 ))}
                 {content.newsletter?.visible === true && <Link href="/#newsletter" onClick={() => setOpen(false)}>
-                  Research updates <Mail size={18} />
+                  {t(locale, 'Research updates')} <Mail size={18} />
                 </Link>}
               </nav>
+              <LanguageSwitcher />
             </SheetContent>
           </Sheet>
         </div>
@@ -97,6 +122,7 @@ export function Footer({
   social: { label: string; url: string }[];
 }) {
   const content = useWebsite();
+  const locale = useWebsiteLanguage();
   const settings = content?.settings;
   const logo = resolveBrandLogo((settings && value(settings, 'logo')) || brand.logo);
   const builtInLogo = logo === brand.logo;
@@ -112,7 +138,15 @@ export function Footer({
     nav.push({ label: 'Resources', url: '/resources', visible: true });
   }
   const configuredSocial = settings ? items(settings, 'social') : [];
-  const socialLinks = configuredSocial.length ? configuredSocial : social;
+  const socialEntries: Record<string, unknown>[] = configuredSocial.length ? configuredSocial : social;
+  const textValue = (input: unknown) => typeof input === 'string' ? input : '';
+  const socialLinks = socialEntries
+    .filter((entry) => entry.visible !== false && /^https:\/\/[^\s/]+/i.test(textValue(entry.url)))
+    .map((entry) => ({
+      platform: textValue(entry.platform) || textValue(entry.label) || 'Social',
+      handle: textValue(entry.handle) || textValue(entry.label) || textValue(entry.platform) || 'Profile',
+      url: textValue(entry.url),
+    }));
 
   return (
     <footer className="site-footer">
@@ -122,44 +156,47 @@ export function Footer({
             <Link className={builtInLogo ? 'footer-logo' : 'footer-logo footer-logo-custom'} href="/">
               <img src={builtInLogo ? brand.logoDark : logo} width="3739" height="849" alt="Heuresis Capital Research" />
             </Link>
-            <p style={{ whiteSpace: 'pre-line' }}>{footerText}</p>
+            <p style={{ whiteSpace: 'pre-line' }}>{t(locale, footerText)}</p>
           </div>
           <div className="footer-nav">
-            <span className="eyebrow">Explore</span>
+            <span className="eyebrow">{t(locale, 'Explore')}</span>
             {nav.map((item) => (
               <Link key={String(item.url)} href={String(item.url)}>
-                {String(item.label)}
+                {t(locale, String(item.label))}
               </Link>
             ))}
           </div>
           <div className="footer-nav">
-            <span className="eyebrow">Stay in the conversation</span>
+            <span className="eyebrow">{t(locale, 'Stay in the conversation')}</span>
             {footerLinks.map((item) => (
               <Link key={String(item.url)} href={String(item.url)}>
-                {String(item.label)} <ArrowUpRight size={16} />
+                {t(locale, String(item.label))} <ArrowUpRight size={16} />
               </Link>
             ))}
             {email && <a href={'mailto:' + email}>{email}</a>}
             {settings && value(settings, 'phone') && <a href={'tel:' + value(settings, 'phone')}>{value(settings, 'phone')}</a>}
             {settings && value(settings, 'address') && <p>{value(settings, 'address')}</p>}
-            {socialLinks.map((s) => (
-              <a key={String(s.url)} href={String(s.url)} target="_blank" rel="noopener noreferrer">
-                {String(s.label)}
-              </a>
-            ))}
+            {socialLinks.length > 0 && <div className="footer-social">
+              <span className="eyebrow">{t(locale, 'Follow Heuresis')}</span>
+              {socialLinks.map((s) => (
+                <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={`${s.platform}: ${s.handle}`}>
+                  <span>{s.platform}</span><strong>{s.handle}</strong><ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+              ))}
+            </div>}
           </div>
         </div>
         <div className="footer-bottom">
-          <Link href="/admin">Team sign in</Link>
+          <Link href="/admin">{t(locale, 'Team sign in')}</Link>
           <span>© {new Date().getFullYear()} {copyright}</span>
           {policiesVisible && (
             <div>
-              {(site.preview || content.privacy?.visible === true) && <Link href="/privacy">Privacy</Link>}
-              {(site.preview || content.terms?.visible === true) && <Link href="/terms">Terms</Link>}
-              {(site.preview || content['research-disclosures']?.visible === true) && <Link href="/research-disclosures">Research disclosures</Link>}
+              {(site.preview || content.privacy?.visible === true) && <Link href="/privacy">{t(locale, 'Privacy')}</Link>}
+              {(site.preview || content.terms?.visible === true) && <Link href="/terms">{t(locale, 'Terms')}</Link>}
+              {(site.preview || content['research-disclosures']?.visible === true) && <Link href="/research-disclosures">{t(locale, 'Research disclosures')}</Link>}
             </div>
           )}
-          <span>{footerNote}</span>
+          <span>{t(locale, footerNote)}</span>
         </div>
       </div>
     </footer>
@@ -182,12 +219,13 @@ export function ResearchRow({
   report: Research;
   compact?: boolean;
 }) {
+  const locale = useWebsiteLanguage();
   return (
     <article className={'research-row ' + (compact ? 'compact' : '')}>
       <div className="row-content">
         <div className="row-top">
-          <span className="eyebrow">{r.type}</span>
-          {r.status === 'sample' && <span className="sample-label">Sample</span>}
+          <span className="eyebrow">{t(locale, r.type)}</span>
+          {r.status === 'sample' && <span className="sample-label">{t(locale, 'Sample')}</span>}
         </div>
         <h3>
           <Link href={'/research/' + r.slug}>{r.title}</Link>
@@ -196,7 +234,7 @@ export function ResearchRow({
         <div className="row-meta">
           {r.date && (
             <time dateTime={r.date}>
-              {new Date(r.date + 'T12:00:00Z').toLocaleDateString('en-GB', {
+              {new Date(r.date + 'T12:00:00Z').toLocaleDateString(locale === 'fr' ? 'fr-FR' : locale === 'it' ? 'it-IT' : 'en-GB', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
@@ -205,7 +243,7 @@ export function ResearchRow({
             </time>
           )}
           {r.author && <>{r.author} · </>}
-          {r.readingMinutes} min read{!compact && <> · {r.topics.join(' / ')}</>}
+          {r.readingMinutes} {t(locale, 'min read')}{!compact && <> · {r.topics.map((topic) => t(locale, topic)).join(' / ')}</>}
         </div>
       </div>
       <Link className="row-arrow" href={'/research/' + r.slug} aria-label={'Read ' + r.title}>
@@ -221,6 +259,7 @@ export function Approach({
   sections?: { title: string; body: string }[];
 }) {
   const content = useWebsite();
+  const locale = useWebsiteLanguage();
   const approach = content?.approach;
   const sections = customSections || (approach && (items(approach, 'sections') as { title: string; body: string }[])) || [
     { title: 'Frame the question', body: 'Define the decision, the context and what needs to be understood.' },
@@ -234,8 +273,8 @@ export function Approach({
       {sections.map((s, i) => (
         <div key={s.title}>
           <span className="step-number">0{i + 1}</span>
-          <h3>{s.title}</h3>
-          <p>{s.body}</p>
+          <h3>{t(locale, s.title)}</h3>
+          <p>{t(locale, s.body)}</p>
         </div>
       ))}
     </div>
@@ -248,6 +287,7 @@ export function Newsletter({
   policiesVisible?: boolean;
 }) {
   const content = useWebsite();
+  const locale = useWebsiteLanguage();
   const newsletter = content?.newsletter;
   if (newsletter?.visible === false) return null;
   const settings = content?.settings;
@@ -259,7 +299,7 @@ export function Newsletter({
   const cardTitle = (newsletter && value(newsletter, 'cardTitle')) || 'Be part of the conversation.';
   const cardIntro = (newsletter && value(newsletter, 'cardIntro')) || 'Email us to express your interest in future research updates.';
   const button = (newsletter && value(newsletter, 'button')) || 'Request updates by email';
-  const subject = (newsletter && value(newsletter, 'subject')) || 'Research updates — Heuresis Capital';
+  const subject = (newsletter && value(newsletter, 'subject')) || t(locale, 'Research updates — Heuresis Capital');
 
   return (
     <section className="container newsletter section" id="newsletter">
@@ -280,14 +320,14 @@ export function Newsletter({
             '?subject=' +
             encodeURIComponent(subject) +
             '&body=' +
-            encodeURIComponent('Hello Heuresis Capital,\r\n\r\nPlease let me know when your research updates are available.')
+            encodeURIComponent(t(locale, 'Hello Heuresis Capital,\r\n\r\nPlease let me know when your research updates are available.'))
           }
         >
           {button} <ArrowUpRight size={17} />
         </a>
         <p className="small">
-          Opens your email app. This is a request, not an automatic subscription.{' '}
-          {policiesVisible && <Link href="/privacy">Privacy notice</Link>}
+          {t(locale, 'Opens your email app. This is a request, not an automatic subscription.')}{' '}
+          {policiesVisible && <Link href="/privacy">{t(locale, 'Privacy notice')}</Link>}
         </p>
       </div>
     </section>
@@ -295,6 +335,7 @@ export function Newsletter({
 }
 
 export function ShareTools() {
+  const locale = useWebsiteLanguage();
   const [state, setState] = useState('Copy link');
   async function copy() {
     try {
@@ -308,11 +349,11 @@ export function ShareTools() {
     <div className="share-tools">
       <button onClick={copy}>
         {state === 'Link copied' ? <Check size={16} /> : <Copy size={16} />}
-        <span aria-live="polite">{state}</span>
+        <span aria-live="polite">{t(locale, state)}</span>
       </button>
       <button onClick={() => window.print()}>
         <Printer size={16} />
-        Print article
+        {t(locale, 'Print article')}
       </button>
     </div>
   );

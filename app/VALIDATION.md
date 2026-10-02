@@ -48,3 +48,11 @@ Completed on 6 September 2026.
 - Applied both migrations to a separate local D1 instance for the built Worker. Browser clicks on the production-built homepage reached Research and Contact with the expected pages and controls. This specifically rechecks the earlier production navigation failure.
 - Repository-wide `pnpm lint` still reports existing generated UI and application warnings, including Next.js `<img>` and native link rules. The production build, type check and behavior checks are the release gates used here; lint is not recorded as passing.
 - All generated research, images and documents used by the tests were local fixtures. No production research or file records were changed by these checks.
+
+## Languages and social profiles — 2 October 2026
+
+- TypeScript and production build passed after the English, French and Italian language controls were added.
+- Browser checks on the local Site confirmed French and Italian homepage wording, the “Explore publications” button, language persistence on internal links, and Italian Services wording.
+- In the local owner desk, a test social profile was saved and appeared in the private website preview with its platform, handle and link. The local-only test draft was then discarded; no production social handle was invented or published.
+- The existing local publishing suite passed 37 checks, and the website suite passed 76 checks. Those suites use local fixtures and do not touch hosted research or files.
+- The repository's lint command still reports pre-existing warnings in UI and application code. Targeted lint also flagged a few new style/accessibility issues, which were corrected before release; type check, production build and behavior checks remain the release gates.

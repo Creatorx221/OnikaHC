@@ -3,11 +3,12 @@ import { Download } from 'lucide-react';
 import { value, items, type Content } from '@/lib/website-schema';
 import { SectionLabel, Newsletter } from '@/components/site';
 import { site } from '@/lib/site-config';
+import { t, type Locale } from '@/lib/i18n';
 
 
 
 
-export function ResourcesView({ website }: { website: Record<string, Content> }) {
+export function ResourcesView({ website, locale = 'en' }: { website: Record<string, Content>; locale?: Locale }) {
   const resources = website.resources;
   const eyebrow = (resources && value(resources, 'eyebrow')) || 'Supporting materials';
   const title = (resources && value(resources, 'title')) || 'Documents & resources';
@@ -38,15 +39,15 @@ export function ResourcesView({ website }: { website: Record<string, Content> })
                 download
               >
                 <Download size={18} />
-                Download document
+                {t(locale, 'Download document')}
               </a>
             </article>
           ))}
         </div>
       ) : (
         <div className="editorial-empty">
-          <h2>No documents currently published.</h2>
-          <p>Published materials and reports will be made available here.</p>
+          <h2>{t(locale, 'No documents currently published.')}</h2>
+          <p>{t(locale, 'Published materials and reports will be made available here.')}</p>
         </div>
       )}
       <Newsletter policiesVisible={site.preview || site.policiesApproved} />

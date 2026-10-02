@@ -4,9 +4,12 @@ import { getResearch } from '@/lib/research-server';
 import { publicWebsite } from '@/lib/website-store';
 import { WebsiteFrame } from '@/components/website-frame';
 import { HomeView } from '@/components/public-pages/home';
-export default async function Home() {
+import { localeFromParams, localizeResearch, localizeWebsite } from '@/lib/i18n';
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const locale = localeFromParams(await searchParams);
   const [reports, website] = await Promise.all([getResearch(), publicWebsite()]);
-  return <WebsiteFrame data={website}><HomeView website={website} reports={reports} /></WebsiteFrame>;
+  const content = localizeWebsite(website, locale);
+  return <WebsiteFrame data={content} locale={locale}><HomeView website={content} reports={reports.map((report) => localizeResearch(report, locale))} locale={locale} /></WebsiteFrame>;
 }
 
 export async function generateMetadata() {

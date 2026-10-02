@@ -3,21 +3,22 @@ import { ArrowUpRight } from 'lucide-react';
 import { site } from '@/lib/site-config';
 import { value, enabled, items, type Content } from '@/lib/website-schema';
 import { SectionLabel, Newsletter } from '@/components/site';
+import { t, type Locale } from '@/lib/i18n';
 
 
 
 
-export function ServicesView({ website }: { website: Record<string, Content> }) {
+export function ServicesView({ website, locale = 'en' }: { website: Record<string, Content>; locale?: Locale }) {
   const services = website.services;
 
-  const eyebrow = (services && value(services, 'eyebrow')) || 'Research capabilities';
-  const title = (services && value(services, 'title')) || 'Start with the question.\nBuild the understanding.';
+  const eyebrow = (services && value(services, 'eyebrow')) || t(locale, 'Research capabilities');
+  const title = (services && value(services, 'title')) || t(locale, 'Start with the question. Build the understanding.');
   const intro =
     (services && value(services, 'intro')) ||
-    'Focused research around the businesses, economic forces and market themes that matter to a decision.';
+    t(locale, 'Focused research around the businesses, economic forces and market themes that matter to a decision.');
   const isVisible = services ? enabled(services, 'visible') : site.preview || site.capabilitiesApproved;
-  const emptyTitle = (services && value(services, 'emptyTitle')) || 'Our research scope is being prepared.';
-  const emptyIntro = (services && value(services, 'emptyIntro')) || 'Confirmed capabilities will be shared here when available.';
+  const emptyTitle = (services && value(services, 'emptyTitle')) || t(locale, 'Our research scope is being prepared.');
+  const emptyIntro = (services && value(services, 'emptyIntro')) || t(locale, 'Confirmed capabilities will be shared here when available.');
   const serviceList = (services && (items(services, 'items') as Content[]).filter((s) => s.visible !== false)) || [];
 
   return (
@@ -50,19 +51,19 @@ export function ServicesView({ website }: { website: Record<string, Content> }) 
                       '/contact?type=bespoke&topic=' + encodeURIComponent(value(c, 'title'))
                     }
                   >
-                    {value(c, 'label') || 'Discuss this research'} <ArrowUpRight size={17} />
+                    {value(c, 'label') || t(locale, 'Discuss this research')} <ArrowUpRight size={17} />
                   </Link>
                 </div>
                 <div>
                   {value(c, 'deliverable') && (
                     <>
-                      <h4>Possible output</h4>
+                      <h4>{t(locale, 'Possible output')}</h4>
                       <p>{value(c, 'deliverable')}</p>
                     </>
                   )}
                   {value(c, 'audience') && (
                     <>
-                      <h4>Intended audience</h4>
+                      <h4>{t(locale, 'Intended audience')}</h4>
                       <p>{value(c, 'audience')}</p>
                     </>
                   )}
@@ -79,19 +80,19 @@ export function ServicesView({ website }: { website: Record<string, Content> }) 
 
         {isVisible && (
           <section className="process">
-            <SectionLabel>Bespoke research</SectionLabel>
-            <h2>A scope agreed together.</h2>
+            <SectionLabel>{t(locale, 'Bespoke research')}</SectionLabel>
+            <h2>{t(locale, 'A scope agreed together.')}</h2>
             <div className="approach-grid">
               {[
                 ['Initial discussion', 'Understand your question, context and intended use.'],
                 ['Agreed scope', 'Agree the coverage, format, sources and practical constraints.'],
-                ['Research', 'Examine the evidence and test the key assumptions.'],
+                ['Conduct research', 'Examine the evidence and test the key assumptions.'],
                 ['Delivery', 'Present the analysis and explain its limitations.'],
-              ].map(([t, p], i) => (
-                <div key={t}>
+              ].map(([stepTitle, stepDescription], i) => (
+                <div key={stepTitle}>
                   <span className="step-number">0{i + 1}</span>
-                  <h3>{t}</h3>
-                  <p>{p}</p>
+                  <h3>{t(locale, stepTitle)}</h3>
+                  <p>{t(locale, stepDescription)}</p>
                 </div>
               ))}
             </div>

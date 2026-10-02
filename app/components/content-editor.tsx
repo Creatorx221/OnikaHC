@@ -16,6 +16,7 @@ import { brand } from '@/lib/brand';
 import {
   definitions,
   emptyFields,
+  translatableField,
   value,
   type Field,
   type Content,
@@ -290,6 +291,19 @@ function EditorFields({
                 onChange={(e) => change(e.target.value)}
               />
             )}
+            {translatableField(f) && <details className="cms-translations">
+              <summary>French and Italian translations (optional)</summary>
+              {(['fr', 'it'] as const).map((locale) => {
+                const translationKey = `${f.key}_${locale}`;
+                const translationId = `${id}-${locale}`;
+                return <div className="form-field" key={translationId}>
+                  <label htmlFor={translationId}>{locale === 'fr' ? 'French' : 'Italian'}: {f.label}</label>
+                  {f.type === 'textarea'
+                    ? <textarea id={translationId} rows={4} maxLength={20000} value={value(data, translationKey)} onChange={(e) => onChange({ ...data, [translationKey]: e.target.value })} />
+                    : <input id={translationId} maxLength={2000} value={value(data, translationKey)} onChange={(e) => onChange({ ...data, [translationKey]: e.target.value })} />}
+                </div>;
+              })}
+            </details>}
           </div>
         );
       })}

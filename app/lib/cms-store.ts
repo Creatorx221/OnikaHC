@@ -238,6 +238,7 @@ export function asResearch(
     status: 'published',
     takeaways: d.takeaways,
     sections: d.sections,
+    translations: d.translations,
     materials: orderedMaterials,
   };
 }

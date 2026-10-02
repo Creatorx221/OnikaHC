@@ -7,8 +7,9 @@ import { ResearchRow, Newsletter, SectionLabel, Approach } from '@/components/si
 
 import type { Content } from '@/lib/website-schema';
 import type { Research } from '@/lib/research';
+import { t, type Locale } from '@/lib/i18n';
 
-export function HomeView({ website, reports }: { website: Record<string, Content>; reports: Research[] }) {
+export function HomeView({ website, reports, locale = 'en' }: { website: Record<string, Content>; reports: Research[]; locale?: Locale }) {
   const home = website.home;
   const services = website.services;
   const approach = website.approach;
@@ -21,7 +22,7 @@ export function HomeView({ website, reports }: { website: Record<string, Content
   const intro =
     value(home, 'intro') ||
     'Company fundamentals. Economic forces. Structural change. Heuresis Capital brings them into focus through careful research and clear thinking.';
-  const primaryLabel = value(home, 'primaryLabel') || 'Explore research';
+  const primaryLabel = value(home, 'primaryLabel') === 'Explore research' ? t(locale, 'Explore publications') : value(home, 'primaryLabel') || t(locale, 'Explore publications');
   const primaryUrl = value(home, 'primaryUrl') || '/research';
   const secondaryLabel = value(home, 'secondaryLabel') || 'Discuss your research needs';
   const secondaryUrl = value(home, 'secondaryUrl') || '/contact?type=bespoke';
@@ -77,15 +78,15 @@ export function HomeView({ website, reports }: { website: Record<string, Content
         {showFeature && (
           <aside className="hero-feature">
             <div className="feature-top">
-              <span className="eyebrow">{featured ? 'In focus' : featureLabel}</span>
+              <span className="eyebrow">{featured ? t(locale, 'In focus') : featureLabel}</span>
               <span className="small">
-                {featured?.status === 'sample' ? 'Illustrative sample' : 'Research & ideas'}
+                {featured?.status === 'sample' ? t(locale, 'Illustrative sample') : t(locale, 'Research & ideas')}
               </span>
             </div>
             {featured ? (
               <>
                 <div className="feature-number" aria-hidden="true">
-                  01<span>/ Research perspective</span>
+                  01<span>/ {t(locale, 'Research perspective')}</span>
                 </div>
                 <span className="eyebrow">{featured.type}</span>
                 <h2>
@@ -93,7 +94,7 @@ export function HomeView({ website, reports }: { website: Record<string, Content
                 </h2>
                 <p>{featured.summary}</p>
                 <Link className="text-link" href={'/research/' + featured.slug}>
-                  Read the perspective <ArrowUpRight size={18} />
+                  {t(locale, 'Read the perspective')} <ArrowUpRight size={18} />
                 </Link>
               </>
             ) : (
@@ -122,7 +123,7 @@ export function HomeView({ website, reports }: { website: Record<string, Content
               <h2>{researchTitle}</h2>
             </div>
             <Link className="text-link" href="/research">
-              View all research <ArrowRight size={17} />
+              {t(locale, 'View all research')} <ArrowRight size={17} />
             </Link>
           </div>
           {reports.length ? (
@@ -134,8 +135,8 @@ export function HomeView({ website, reports }: { website: Record<string, Content
                 </h3>
                 <p>{second.summary}</p>
                 <div className="row-meta">
-                  {second.status === 'sample' ? 'Illustrative sample' : second.date} ·{' '}
-                  {second.readingMinutes} min read
+                  {second.status === 'sample' ? t(locale, 'Illustrative sample') : second.date} ·{' '}
+                  {second.readingMinutes} {t(locale, 'min read')}
                 </div>
                 <Link
                   className="circle-link"
@@ -159,7 +160,7 @@ export function HomeView({ website, reports }: { website: Record<string, Content
               <h3>{emptyTitle}</h3>
               <p>{emptyIntro}</p>
               <Link className="text-link" href="/about">
-                About Heuresis <ArrowRight size={16} />
+                {t(locale, 'About Heuresis')} <ArrowRight size={16} />
               </Link>
             </div>
           )}
@@ -171,10 +172,10 @@ export function HomeView({ website, reports }: { website: Record<string, Content
           <div className="container">
             <div className="section-heading">
               <div>
-                <SectionLabel>Connecting the picture</SectionLabel>
-                <h2>Research across the market</h2>
+                <SectionLabel>{t(locale, 'Connecting the picture')}</SectionLabel>
+                <h2>{t(locale, 'Research across the market')}</h2>
               </div>
-              <p className="section-note">Explore our research areas.</p>
+              <p className="section-note">{t(locale, 'Explore our research areas.')}</p>
             </div>
             <div className="coverage-grid">
               {visibleServices.slice(0, 4).map((c, i) => (
@@ -210,7 +211,7 @@ export function HomeView({ website, reports }: { website: Record<string, Content
                   'From a company’s earnings to a shift in market conditions, useful research makes the reasoning visible.'}
               </p>
               <Link className="text-link" href="/about#approach">
-                Explore our approach <ArrowUpRight size={17} />
+                {t(locale, 'Explore our approach')} <ArrowUpRight size={17} />
               </Link>
             </div>
           </div>

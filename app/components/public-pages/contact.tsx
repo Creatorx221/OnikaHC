@@ -2,11 +2,12 @@ import { site } from '@/lib/site-config';
 import { value, items, type Content } from '@/lib/website-schema';
 import { SectionLabel } from '@/components/site';
 import { EnquiryForm } from '@/components/enquiry-form';
+import { t, type Locale } from '@/lib/i18n';
 
 
 
 
-export function ContactView({ website, initialType, initialTopic }: { website: Record<string, Content>; initialType: string; initialTopic: string }) {
+export function ContactView({ website, initialType, initialTopic, locale = 'en' }: { website: Record<string, Content>; initialType: string; initialTopic: string; locale?: Locale }) {
   const contact = website.contact;
   const settings = website.settings;
 
@@ -49,9 +50,9 @@ export function ContactView({ website, initialType, initialTopic }: { website: R
             ))}
           </ul>
           <div className="contact-direct">
-            <span className="eyebrow">Contact Heuresis Capital</span>
+            <span className="eyebrow">{t(locale, 'Contact Heuresis Capital')}</span>
             <a href={'mailto:' + contactEmail}>{contactEmail}</a>
-            <p>Prefer to write directly? Send your question to our team.</p>
+            <p>{t(locale, 'Prefer to write directly? Send your question to our team.')}</p>
           </div>
         </aside>
         <EnquiryForm

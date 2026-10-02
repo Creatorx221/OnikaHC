@@ -1,4 +1,4 @@
-import type { ResearchDraft } from './cms-types';
+import type { ResearchDraft, ResearchTranslation } from './cms-types';
 import { researchTypes } from './cms-types';
 export class CmsError extends Error {
   constructor(
@@ -83,6 +83,28 @@ export function validateDraft(input: unknown): ResearchDraft {
     throw new CmsError('Invalid attachment.');
   if (typeof v.featured !== 'boolean')
     throw new CmsError('Invalid featured selection.');
+  const translations: ResearchDraft['translations'] = {};
+  if (v.translations !== undefined) {
+    const supplied = record(v.translations);
+    for (const locale of ['fr', 'it'] as const) {
+      if (supplied[locale] === undefined) continue;
+      const edition = record(supplied[locale]);
+      const translatedSections = list(edition.sections ?? [], 30, 'Translated sections').map((section) => {
+        const translated = record(section);
+        return {
+          title: text(translated.title ?? '', 180, 'Translated section heading'),
+          paragraphs: list(translated.paragraphs ?? [], 100, 'Translated paragraphs').map((paragraph) => text(paragraph, 12000, 'Translated paragraph')),
+        };
+      });
+      translations[locale] = {
+        title: text(edition.title ?? '', 200, 'Translated title'),
+        summary: text(edition.summary ?? '', 1000, 'Translated summary'),
+        takeaways: list(edition.takeaways ?? [], 3, 'Translated takeaways').map((item) => text(item, 600, 'Translated takeaway')),
+        sections: translatedSections,
+        disclosures: text(edition.disclosures ?? '', 6000, 'Translated disclosures'),
+      } satisfies ResearchTranslation;
+    }
+  }
   return {
     title,
     slug,
@@ -101,6 +123,7 @@ export function validateDraft(input: unknown): ResearchDraft {
     disclosures: text(v.disclosures, 6000, 'Disclosures'),
     materialIds: [...new Set(materialIds)],
     featured: v.featured,
+    translations,
   };
 }
 export function publicationIssues(d: ResearchDraft) {

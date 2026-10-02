@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { getDb } from '@/db';
 import { brand } from './brand';
 import { CmsError } from './cms-validation';
-import { definitions, defaultWebsite, assetIds, type Content, type Field } from './website-schema';
+import { definitions, defaultWebsite, assetIds, translatableField, value, type Content, type Field } from './website-schema';
 
 type ContentRow = {
   key: string;
@@ -47,7 +47,7 @@ export async function getContentRecord(key: string): Promise<ContentRecord> {
   return r
     ? {
         key,
-        draft: JSON.parse(r.draft_json),
+        draft: key === 'settings' ? normalizeSettings(JSON.parse(r.draft_json)) : JSON.parse(r.draft_json),
         revision: r.revision,
         publishedRevision: r.published_revision,
         updatedAt: r.updated_at,
@@ -59,6 +59,16 @@ export async function getContentRecord(key: string): Promise<ContentRecord> {
         publishedRevision: null,
         updatedAt: null,
       };
+}
+
+function normalizeSettings(data: Content): Content {
+  const social = Array.isArray(data.social) ? data.social as Content[] : [];
+  return { ...data, social: social.map((entry) => ({
+    platform: value(entry, 'platform') || value(entry, 'label'),
+    handle: value(entry, 'handle') || value(entry, 'label'),
+    url: value(entry, 'url'),
+    visible: entry.visible !== false,
+  })) };
 }
 
 export const publicWebsite = cache(async () => {
@@ -170,6 +180,14 @@ function validateFields(input: unknown, fields: Field[], path = ''): Content {
       )
         throw new CmsError(label + ': choose an uploaded file.');
       out[f.key] = s;
+      if (translatableField(f)) {
+        for (const locale of ['fr', 'it'] as const) {
+          const translated = source[`${f.key}_${locale}`];
+          if (translated !== undefined && (typeof translated !== 'string' || translated.length > (f.type === 'textarea' ? 20000 : 2000)))
+            throw new CmsError(label + ': translation is too long or invalid.');
+          out[`${f.key}_${locale}`] = typeof translated === 'string' ? translated.trim() : '';
+        }
+      }
     }
   }
   return out;
@@ -205,6 +223,13 @@ export async function updateContent(
     (!data.name || !data.email || !/^#[0-9a-fA-F]{6}$/.test(String(data.accent)))
   )
     throw new CmsError('Add the company name, contact email and a colour such as #9C8552.');
+  if (key === 'settings' && action === 'publish') {
+    for (const profile of (data.social || []) as Content[]) {
+      if (profile.visible === false) continue;
+      if (!value(profile, 'platform').trim() || !value(profile, 'handle').trim() || !/^https:\/\/[^\s/]+/i.test(value(profile, 'url')))
+        throw new CmsError('Each visible social profile needs a platform, handle and full HTTPS link.');
+    }
+  }
   for (const id of assetIds(data)) {
     const a = await getAsset(id);
     if (!a || a.archived)
