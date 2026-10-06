@@ -28,8 +28,10 @@ export async function editorSession() {
 export async function requireEditor(ownerOnly = false) {
   const session = await editorSession();
   if (!session) throw new CmsError('Sign in to the research desk.', 401);
-  if (!session.editor || (ownerOnly && !session.owner))
-    throw new CmsError('Publishing access is required.', 403);
+  if (!session.editor)
+    throw new CmsError('Editorial access is required.', 403);
+  if (ownerOnly && !session.owner)
+    throw new CmsError('Owner access is required.', 403);
   return session;
 }
 export function requireSameOrigin(request: Request) {

@@ -16,8 +16,7 @@ export default async function Admin() {
         <p className="eyebrow">Heuresis Capital · Research desk</p>
         <h1>A home for your research.</h1>
         <p>
-          Write and review drafts, attach supporting materials, and publish to
-          the research library.
+          Edit and publish research, website pages, team profiles and files.
         </p>
         <a className="button" href={chatGPTSignInPath('/admin')} target="_top">
           Sign in with ChatGPT
@@ -32,10 +31,10 @@ export default async function Admin() {
     return (
       <main id="main" className="container desk-login">
         <p className="eyebrow">Research desk</p>
-        <h1>Publishing access</h1>
+        <h1>Editorial access</h1>
         <p>
           You are signed in as {user.email}. Ask the site owner to approve your
-          publishing access.
+          editorial access.
         </p>
         <AccessRequest requested={!!session?.requested} />
         <p className="small">

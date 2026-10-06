@@ -38,7 +38,10 @@ export function DeskHeader({ children, owner = false }: { children?: React.React
       </a>
       <nav aria-label="Research desk navigation">
         <a href="/admin">Research</a>
-        {owner && <><a href="/admin/content">Website content</a><a href="/admin/content/team">Team profiles</a><a href="/admin/files">Files</a><a href="/admin/team">Access</a></>}
+        <a href="/admin/content">Website content</a>
+        <a href="/admin/content/team">Team profiles</a>
+        <a href="/admin/files">Files</a>
+        {owner && <a href="/admin/team">Access</a>}
         {children}
         <a href="/research" target="_blank" rel="noopener noreferrer">
           View website <ArrowUpRight size={15} />
@@ -236,7 +239,7 @@ export function AccessRequest({ requested }: { requested: boolean }) {
           ? 'Access request received'
           : pending
             ? 'Requesting…'
-            : 'Request publishing access'}
+            : 'Request editorial access'}
       </button>
       {sent && (
         <output className="block">
@@ -294,7 +297,7 @@ export function TeamAccess({ entries }: { entries: EditorRequest[] }) {
             <h1>Team access</h1>
             <p>
               Teammates sign in at /admin and request access. Approve only the
-              people who should edit and publish research.
+              people who should edit and publish research, website pages, team profiles and files. Only the owner can manage access.
             </p>
           </div>
         </div>
@@ -346,7 +349,7 @@ export function TeamAccess({ entries }: { entries: EditorRequest[] }) {
             <h2>No access requests yet.</h2>
             <p>
               Share the research desk address with your team. Your owner account
-              already has publishing access.
+              already has full editorial access.
             </p>
           </div>
         )}
@@ -360,14 +363,14 @@ export function TeamAccess({ entries }: { entries: EditorRequest[] }) {
             <AlertDialogHeader>
               <AlertDialogTitle>
                 {choice?.status === 'approved'
-                  ? 'Approve publishing access?'
-                  : 'Revoke publishing access?'}
+                  ? 'Approve editorial access?'
+                  : 'Revoke editorial access?'}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {choice?.row.email}{' '}
                 {choice?.status === 'approved'
-                  ? 'will be able to edit, upload and publish research.'
-                  : 'will no longer be able to use the research desk.'}
+                  ? 'will be able to edit and publish research, website pages, team profiles and files. Only the owner can manage access.'
+                  : 'will no longer be able to edit research or the website.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

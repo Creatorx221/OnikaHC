@@ -314,9 +314,11 @@ function EditorFields({
 export function ContentEditor({
   initial,
   initialAssets,
+  owner,
 }: {
   initial: ContentRecord;
   initialAssets: AssetOption[];
+  owner: boolean;
 }) {
   const [record, setRecord] = useState(initial);
   const [draft, setDraft] = useState(initial.draft);
@@ -390,7 +392,7 @@ export function ContentEditor({
 
   return (
     <>
-      <DeskHeader owner />
+      <DeskHeader owner={owner} />
       <main id="main" className="container desk-main">
         <a className="text-link" href="/admin/content">
           All website content
@@ -524,7 +526,7 @@ export function ContentEditor({
   );
 }
 
-export function FileLibrary({ initial }: { initial: AssetOption[] }) {
+export function FileLibrary({ initial, owner }: { initial: AssetOption[]; owner: boolean }) {
   const [assets, setAssets] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -582,7 +584,7 @@ export function FileLibrary({ initial }: { initial: AssetOption[] }) {
 
   return (
     <>
-      <DeskHeader owner />
+      <DeskHeader owner={owner} />
       <main id="main" className="container desk-main">
         <div className="desk-heading">
           <div>

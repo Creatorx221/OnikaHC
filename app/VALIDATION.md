@@ -56,3 +56,10 @@ Completed on 6 September 2026.
 - In the local owner desk, a test social profile was saved and appeared in the private website preview with its platform, handle and link. The local-only test draft was then discarded; no production social handle was invented or published.
 - The existing local publishing suite passed 37 checks, and the website suite passed 76 checks. Those suites use local fixtures and do not touch hosted research or files.
 - The repository's lint command still reports pre-existing warnings in UI and application code. Targeted lint also flagged a few new style/accessibility issues, which were corrected before release; type check, production build and behavior checks remain the release gates.
+
+## Approved-editor website access — 6 October 2026
+
+- TypeScript and the production Worker build passed.
+- Twelve local checks with an approved non-owner account passed: website content, team profiles, files and saved previews were available; saving a website draft worked; an invalid upload reached file validation; the Access page and access-changing API remained owner-only.
+- The existing local publishing suite passed 37 checks, and the website publishing suite passed 76 checks. Test content was confined to local storage.
+- The temporary local approved-editor row and alternate owner setting were restored after the access test. No hosted access or content records were altered during testing.

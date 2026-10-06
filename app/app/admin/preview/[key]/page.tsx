@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default async function PreviewPage({ params }: { params: Promise<{key:string}> }) {
   try {
-    await requireEditor(true);
+    await requireEditor();
   } catch {
     redirect('/admin');
   }
@@ -52,7 +52,7 @@ export default async function PreviewPage({ params }: { params: Promise<{key:str
 
   return <WebsiteFrame data={website} preview>
     <output className="preview-bar draft-preview-banner">
-      Saved draft preview · {definitions[key].title} · Visible only to the owner
+      Saved draft preview · {definitions[key].title} · Visible only to approved editors
     </output>
     {page}
   </WebsiteFrame>;
